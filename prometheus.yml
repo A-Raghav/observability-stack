@@ -1,0 +1,26 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    environment: local-dev
+
+scrape_configs:
+
+  # ── App metrics exported by OTel Collector ───────────────────────────────────
+  # agent.request.duration, agent.llm.tokens.*, agent.eval.*, etc.
+  - job_name: agent-apps
+    static_configs:
+      - targets: ["otel-collector:8889"]
+        labels:
+          source: otel-collector
+
+  # ── OTel Collector's own health metrics ─────────────────────────────────────
+  # otelcol_receiver_accepted_spans_total, otelcol_exporter_*, etc.
+  - job_name: otel-collector
+    static_configs:
+      - targets: ["otel-collector:8888"]
+
+  # ── Prometheus self-monitoring ───────────────────────────────────────────────
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]

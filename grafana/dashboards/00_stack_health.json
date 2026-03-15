@@ -1,0 +1,224 @@
+{
+  "id": null,
+  "uid": "stack-health",
+  "title": "Stack Health",
+  "tags": ["infra", "health"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "time": { "from": "now-30m", "to": "now" },
+  "panels": [
+
+    {
+      "id": 1,
+      "title": "Prometheus Targets Up",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "count(up == 1)", "legendFormat": "Up" }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value_and_name"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "green", "mode": "fixed" },
+          "displayName": "Targets Up"
+        }
+      }
+    },
+
+    {
+      "id": 2,
+      "title": "Prometheus Targets Down",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "count(up == 0) or vector(0)", "legendFormat": "Down" }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value_and_name"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "red", "mode": "fixed" },
+          "displayName": "Targets Down",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          },
+          "color": { "mode": "thresholds" }
+        }
+      }
+    },
+
+    {
+      "id": 3,
+      "title": "Collector Uptime",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "otelcol_process_uptime", "legendFormat": "Uptime (s)" }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "value",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "displayName": "Collector Uptime",
+          "unit": "s",
+          "color": { "fixedColor": "blue", "mode": "fixed" }
+        }
+      }
+    },
+
+    {
+      "id": 10,
+      "title": "Collector — Spans Received / s",
+      "description": "Rate of trace spans received from apps via OTLP. Goes non-zero once apps are instrumented.",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "rate(otelcol_receiver_accepted_spans_total[1m])",
+          "legendFormat": "accepted — {{receiver}}"
+        },
+        {
+          "expr": "rate(otelcol_receiver_refused_spans_total[1m])",
+          "legendFormat": "refused — {{receiver}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "lineWidth": 2 } },
+        "overrides": [
+          {
+            "matcher": { "id": "byNamePattern", "options": "refused" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }]
+          }
+        ]
+      }
+    },
+
+    {
+      "id": 11,
+      "title": "Collector — Metric Points Received / s",
+      "description": "Rate of metric data points received from apps. Goes non-zero once apps are instrumented.",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "rate(otelcol_receiver_accepted_metric_points_total[1m])",
+          "legendFormat": "accepted — {{receiver}}"
+        },
+        {
+          "expr": "rate(otelcol_receiver_refused_metric_points_total[1m])",
+          "legendFormat": "refused — {{receiver}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "lineWidth": 2 } }
+      }
+    },
+
+    {
+      "id": 12,
+      "title": "Collector — Log Records Received / s",
+      "description": "Rate of log records received from apps. Goes non-zero once apps are instrumented.",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "rate(otelcol_receiver_accepted_log_records_total[1m])",
+          "legendFormat": "accepted — {{receiver}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "lineWidth": 2 } }
+      }
+    },
+
+    {
+      "id": 13,
+      "title": "Collector — Export Errors / s",
+      "description": "Should be 0 at all times. Any non-zero value means signals are being dropped before reaching a backend.",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "rate(otelcol_exporter_send_failed_spans_total[1m])",
+          "legendFormat": "spans failed — {{exporter}}"
+        },
+        {
+          "expr": "rate(otelcol_exporter_send_failed_metric_points_total[1m])",
+          "legendFormat": "metrics failed — {{exporter}}"
+        },
+        {
+          "expr": "rate(otelcol_exporter_send_failed_log_records_total[1m])",
+          "legendFormat": "logs failed — {{exporter}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "lineWidth": 2 },
+          "color": { "fixedColor": "red", "mode": "fixed" }
+        }
+      }
+    },
+
+    {
+      "id": 20,
+      "title": "Collector — Queue Size (back-pressure indicator)",
+      "description": "If queue size grows, the collector cannot export fast enough. Should stay near 0.",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "otelcol_exporter_queue_size",
+          "legendFormat": "{{exporter}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "lineWidth": 2 } }
+      }
+    },
+
+    {
+      "id": 21,
+      "title": "Collector — Process Memory RSS",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "otelcol_process_memory_rss",
+          "legendFormat": "RSS"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "bytes", "custom": { "lineWidth": 2 } }
+      }
+    }
+
+  ]
+}

@@ -1,0 +1,99 @@
+# ─────────────────────────────────────────────────────────────────────────────
+#  OpenTelemetry Collector — Agent Observability PoC
+#
+#  Pipeline:
+#    apps (OTLP) → receivers → processors → exporters
+#      traces  → Tempo
+#      metrics → Prometheus (pull)
+#      logs    → Loki
+# ─────────────────────────────────────────────────────────────────────────────
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  # Enrich every signal with deployment context
+  resource:
+    attributes:
+      - key: environment
+        value: local-dev
+        action: upsert
+
+  # Batch before export — reduces round-trips to backends
+  batch:
+    timeout: 2s
+    send_batch_size: 512
+    send_batch_max_size: 1024
+
+  # Tag which resource attributes become Loki stream labels.
+  # The loki exporter reads the "loki.resource.labels" hint attribute
+  # and promotes those fields to Loki stream labels for efficient filtering.
+  transform/loki_hints:
+    log_statements:
+      - context: resource
+        statements:
+          - set(attributes["loki.resource.labels"], "service.name, agent.framework")
+
+  # Drop /health check spans — they add noise and cost
+  filter/drop_health:
+    error_mode: ignore
+    traces:
+      span:
+        - 'attributes["http.route"] == "/health"'
+        - 'attributes["http.target"] == "/health"'
+
+exporters:
+  # ── Traces → Tempo ───────────────────────────────────────────────────────────
+  otlp/tempo:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+
+  # ── Metrics → Prometheus (pull model) ───────────────────────────────────────
+  # Prometheus scrapes this endpoint on 8889
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    metric_expiration: 3h
+    enable_open_metrics: true
+
+  # ── Logs → Loki ─────────────────────────────────────────────────────────────
+  loki:
+    endpoint: http://loki:3100/loki/api/v1/push
+    default_labels_enabled:
+      exporter: false
+      job: true        # service.name → job label
+      instance: false
+      level: true      # severity → level label
+    # Custom label mapping is done via the transform/loki_hints processor above
+    # (the 'labels' key was removed from the loki exporter in contrib ≥ 0.82.0)
+
+  # Debug — prints basic signal summaries to collector stdout (remove in prod)
+  debug:
+    verbosity: basic
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [resource, filter/drop_health, batch]
+      exporters: [otlp/tempo]
+
+    metrics:
+      receivers: [otlp]
+      processors: [resource, batch]
+      exporters: [prometheus]
+
+    logs:
+      receivers: [otlp]
+      processors: [resource, transform/loki_hints, batch]
+      exporters: [loki]
+
+  # Collector's own health metrics — scraped by Prometheus on 8888
+  telemetry:
+    metrics:
+      address: 0.0.0.0:8888

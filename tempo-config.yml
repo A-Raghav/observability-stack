@@ -1,0 +1,52 @@
+server:
+  http_listen_port: 3200
+  log_level: info
+
+# Receives traces from the OTel Collector via OTLP
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+
+ingester:
+  max_block_duration: 5m
+
+compactor:
+  compaction:
+    block_retention: 48h       # keep traces for 48h on local PoC
+
+storage:
+  trace:
+    backend: local
+    local:
+      path: /var/tempo/blocks
+    wal:
+      path: /var/tempo/wal
+
+# ── Metrics Generator ─────────────────────────────────────────────────────────
+# Automatically derives RED metrics and service graphs from incoming trace data.
+# These are written to Prometheus via remote_write and appear as:
+#   traces_spanmetrics_calls_total
+#   traces_spanmetrics_duration_*
+#   traces_service_graph_request_*
+#
+# This means you get request rate / error rate / duration dashboards
+# without any extra instrumentation in the apps.
+metrics_generator:
+  registry:
+    external_labels:
+      source: tempo
+      environment: local-dev
+  storage:
+    path: /var/tempo/generator/wal
+    remote_write:
+      - url: http://prometheus:9090/api/v1/write
+        send_exemplars: true   # links metric data points back to their source trace
+
+overrides:
+  # legacyConfig flat key — sets default processors for all tenants
+  metrics_generator_processors: [service-graphs, span-metrics]
