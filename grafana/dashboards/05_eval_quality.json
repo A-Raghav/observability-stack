@@ -1,0 +1,278 @@
+{
+  "uid": "eval-quality",
+  "title": "05 · Eval Quality",
+  "description": "AI-judged and heuristic quality scores for all agent responses. Shows LLM quality metrics (relevance, completeness, hallucination, conciseness), agent behaviour scores, and business outcome metrics. Links to Tempo traces via trace_id.",
+  "tags": ["eval", "quality", "llm-judge", "engineering"],
+  "timezone": "browser",
+  "refresh": "1m",
+  "time": { "from": "now-24h", "to": "now" },
+  "schemaVersion": 39,
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Response Relevance",
+      "description": "Gemini 2.5-flash judge",
+      "gridPos": { "x": 0, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            { "color": "red", "value": null },
+            { "color": "yellow", "value": 0.6 },
+            { "color": "green", "value": 0.8 }
+          ]
+        }
+      },
+      "targets": [{
+        "expr": "avg(eval_llm_response_relevance)",
+        "legendFormat": "relevance"
+      }],
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1 } }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Completeness",
+      "description": "Gemini 2.5-flash judge",
+      "gridPos": { "x": 4, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            { "color": "red", "value": null },
+            { "color": "yellow", "value": 0.6 },
+            { "color": "green", "value": 0.8 }
+          ]
+        }
+      },
+      "targets": [{
+        "expr": "avg(eval_llm_completeness)",
+        "legendFormat": "completeness"
+      }],
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1 } }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Hallucination Risk",
+      "description": "Gemini 2.5-pro judge — lower is better",
+      "gridPos": { "x": 8, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 0.2 },
+            { "color": "red", "value": 0.4 }
+          ]
+        }
+      },
+      "targets": [{
+        "expr": "avg(eval_llm_hallucination_risk)",
+        "legendFormat": "hallucination risk"
+      }],
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1 } }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Conciseness",
+      "description": "Gemini 2.5-flash judge",
+      "gridPos": { "x": 12, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            { "color": "red", "value": null },
+            { "color": "yellow", "value": 0.6 },
+            { "color": "green", "value": 0.8 }
+          ]
+        }
+      },
+      "targets": [{
+        "expr": "avg(eval_llm_conciseness)",
+        "legendFormat": "conciseness"
+      }],
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1 } }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Task Completion",
+      "description": "Gemini 2.5-pro judge",
+      "gridPos": { "x": 16, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            { "color": "red", "value": null },
+            { "color": "yellow", "value": 0.6 },
+            { "color": "green", "value": 0.8 }
+          ]
+        }
+      },
+      "targets": [{
+        "expr": "avg(eval_business_task_completion)",
+        "legendFormat": "task completion"
+      }],
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1 } }
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Session Goal Achieved",
+      "description": "Gemini 2.5-pro judge",
+      "gridPos": { "x": 20, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            { "color": "red", "value": null },
+            { "color": "yellow", "value": 0.6 },
+            { "color": "green", "value": 0.8 }
+          ]
+        }
+      },
+      "targets": [{
+        "expr": "avg(eval_business_session_goal_achieved)",
+        "legendFormat": "goal achieved"
+      }],
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1 } }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "LLM Quality Scores Over Time — by Framework",
+      "description": "All four LLM quality metrics. Drop below 0.7 warrants investigation.",
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 9 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "avg by (agent_framework) (eval_llm_response_relevance)",
+          "legendFormat": "relevance ({{agent_framework}})"
+        },
+        {
+          "expr": "avg by (agent_framework) (eval_llm_completeness)",
+          "legendFormat": "completeness ({{agent_framework}})"
+        },
+        {
+          "expr": "avg by (agent_framework) (eval_llm_conciseness)",
+          "legendFormat": "conciseness ({{agent_framework}})"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "percentunit", "min": 0, "max": 1 },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "hallucination (langgraph)" },
+            "properties": [{ "id": "custom.lineStyle", "value": { "dash": [10, 5], "fill": "dash" } }]
+          }
+        ]
+      }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Hallucination Risk — Over Time",
+      "description": "Lower is better. Sustained values above 0.3 indicate a systemic issue.",
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 9 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "avg by (agent_framework) (eval_llm_hallucination_risk)",
+          "legendFormat": "hallucination_risk ({{agent_framework}})"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.2 },
+              { "color": "red", "value": 0.4 }
+            ]
+          },
+          "custom": { "thresholdsStyle": { "mode": "line" } }
+        }
+      }
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Business Outcome Scores — LangGraph vs ADK",
+      "description": "task_completion and session_goal_achieved judged by Gemini 2.5-pro. Cross-framework comparison at a glance.",
+      "gridPos": { "x": 0, "y": 13, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "avg by (agent_framework) (eval_business_task_completion)",
+          "legendFormat": "task_completion ({{agent_framework}})"
+        },
+        {
+          "expr": "avg by (agent_framework) (eval_business_session_goal_achieved)",
+          "legendFormat": "session_goal ({{agent_framework}})"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1 } }
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Composite Quality Score",
+      "description": "Weighted average: 30% relevance + 30% task_completion + 20% completeness + 10% conciseness - 10% hallucination_risk.",
+      "gridPos": { "x": 12, "y": 13, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "avg by (agent_framework) (0.3 * eval_llm_response_relevance + 0.3 * eval_business_task_completion + 0.2 * eval_llm_completeness + 0.1 * eval_llm_conciseness - 0.1 * eval_llm_hallucination_risk)",
+          "legendFormat": "composite ({{agent_framework}})"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 0.6 },
+              { "color": "green", "value": 0.75 }
+            ]
+          },
+          "custom": { "thresholdsStyle": { "mode": "area" } }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,188 @@
+{
+  "uid": "exec-overview",
+  "title": "01 · Executive Overview",
+  "description": "High-level KPIs for executive and management audiences. Shows platform health, request volume, error rates, and top-line eval scores across both agent frameworks.",
+  "tags": ["executive", "kpi", "overview"],
+  "timezone": "browser",
+  "refresh": "1m",
+  "time": { "from": "now-24h", "to": "now" },
+  "schemaVersion": 39,
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Total Requests (24 h)",
+      "gridPos": { "x": 0, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": { "colorMode": "background", "graphMode": "area", "reduceOptions": { "calcs": ["sum"] } },
+      "targets": [{
+        "expr": "sum(increase(agent_request_duration_milliseconds_count[24h]))",
+        "legendFormat": "Requests"
+      }]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Error Rate",
+      "gridPos": { "x": 4, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 0.01 },
+            { "color": "red", "value": 0.05 }
+          ]
+        }
+      },
+      "targets": [{
+        "expr": "sum(increase(agent_error_count_total[1h])) / (sum(increase(agent_request_duration_milliseconds_count[1h])) + 0.001)",
+        "legendFormat": "Error rate"
+      }],
+      "fieldConfig": {
+        "defaults": { "unit": "percentunit" }
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Avg Task Completion Score",
+      "gridPos": { "x": 8, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            { "color": "red", "value": null },
+            { "color": "yellow", "value": 0.6 },
+            { "color": "green", "value": 0.8 }
+          ]
+        }
+      },
+      "targets": [{
+        "expr": "avg(eval_business_task_completion)",
+        "legendFormat": "Task completion"
+      }],
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1 } }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Avg Response Relevance",
+      "gridPos": { "x": 12, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            { "color": "red", "value": null },
+            { "color": "yellow", "value": 0.6 },
+            { "color": "green", "value": 0.8 }
+          ]
+        }
+      },
+      "targets": [{
+        "expr": "avg(eval_llm_response_relevance)",
+        "legendFormat": "Relevance"
+      }],
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1 } }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Active Sessions (last hour)",
+      "gridPos": { "x": 16, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [{
+        "expr": "count(count by (agent_session_id) (agent_request_duration_milliseconds_count))",
+        "legendFormat": "Sessions"
+      }]
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Frameworks Online",
+      "gridPos": { "x": 20, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [{
+        "expr": "count(count by (agent_framework) (agent_request_duration_milliseconds_count))",
+        "legendFormat": "Frameworks"
+      }]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Request Volume — by Framework",
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": { "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "expr": "sum by (agent_framework) (rate(agent_request_duration_milliseconds_count[5m]))",
+          "legendFormat": "{{agent_framework}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" } }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "P95 End-to-End Latency — by Framework",
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": { "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (agent_framework, le) (rate(agent_request_duration_milliseconds_bucket[5m])))",
+          "legendFormat": "p95 {{agent_framework}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ms" } }
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Business Eval Scores Over Time",
+      "description": "task_completion and session_goal_achieved — both judged by Gemini 2.5-pro",
+      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "avg by (agent_framework) (eval_business_task_completion)",
+          "legendFormat": "task_completion ({{agent_framework}})"
+        },
+        {
+          "expr": "avg by (agent_framework) (eval_business_session_goal_achieved)",
+          "legendFormat": "session_goal ({{agent_framework}})"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1 } }
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Error Count — by Type",
+      "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (error_type, agent_framework) (increase(agent_error_count_total[5m]))",
+          "legendFormat": "{{error_type}} ({{agent_framework}})"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    }
+  ]
+}

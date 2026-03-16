@@ -1,0 +1,203 @@
+{
+  "uid": "agent-behaviour",
+  "title": "04 · Agent Behaviour",
+  "description": "Per-agent run behaviour: tool selection, reasoning depth, session patterns. Enables cross-framework comparison (LangGraph vs ADK) and helps identify over-tooling or under-tooling.",
+  "tags": ["agent", "tools", "behaviour", "engineering"],
+  "timezone": "browser",
+  "refresh": "30s",
+  "time": { "from": "now-6h", "to": "now" },
+  "schemaVersion": 39,
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Total Tool Calls (1 h)",
+      "gridPos": { "x": 0, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["sum"] } },
+      "targets": [{
+        "expr": "sum(increase(agent_tool_call_count_total[1h]))",
+        "legendFormat": "tool calls"
+      }]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Tool Appropriateness Score",
+      "description": "From Gemini 2.5-flash eval judge",
+      "gridPos": { "x": 4, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            { "color": "red", "value": null },
+            { "color": "yellow", "value": 0.6 },
+            { "color": "green", "value": 0.8 }
+          ]
+        }
+      },
+      "targets": [{
+        "expr": "avg(eval_agent_tool_appropriateness)",
+        "legendFormat": "appropriateness"
+      }],
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1 } }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Avg Tool Calls per Request",
+      "gridPos": { "x": 8, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [{
+        "expr": "sum(rate(agent_tool_call_count_total[5m])) / (sum(rate(agent_request_duration_milliseconds_count[5m])) + 0.001)",
+        "legendFormat": "tools/req"
+      }],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "web_search Calls (1 h)",
+      "gridPos": { "x": 12, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["sum"] } },
+      "targets": [{
+        "expr": "sum(increase(agent_tool_call_count_total{tool_name=~\"web_search.*\"}[1h]))",
+        "legendFormat": "web_search"
+      }]
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "math Calls (1 h)",
+      "gridPos": { "x": 16, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["sum"] } },
+      "targets": [{
+        "expr": "sum(increase(agent_tool_call_count_total{tool_name=~\"math.*\"}[1h]))",
+        "legendFormat": "math"
+      }]
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Tool Failure Rate",
+      "gridPos": { "x": 20, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 0.02 },
+            { "color": "red", "value": 0.1 }
+          ]
+        }
+      },
+      "targets": [{
+        "expr": "sum(rate(agent_tool_call_count_total{tool_success=\"false\"}[5m])) / (sum(rate(agent_tool_call_count_total[5m])) + 0.001)",
+        "legendFormat": "failure rate"
+      }],
+      "fieldConfig": { "defaults": { "unit": "percentunit" } }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Tool Call Rate — by Tool and Framework",
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{
+        "expr": "sum by (tool_name, agent_framework) (rate(agent_tool_call_count_total[2m]))",
+        "legendFormat": "{{tool_name}} ({{agent_framework}})"
+      }],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Heuristic Eval — Tool Call Count per Run",
+      "description": "Direct counter from the HeuristicRunner. Tracks whether agents are calling more or fewer tools over time.",
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "avg by (agent_framework) (eval_agent_tool_call_count)",
+          "legendFormat": "avg tool_calls ({{agent_framework}})"
+        },
+        {
+          "expr": "max by (agent_framework) (eval_agent_tool_call_count)",
+          "legendFormat": "max tool_calls ({{agent_framework}})"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Reasoning Turns per Run — LangGraph vs ADK",
+      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "avg by (agent_framework) (eval_agent_reasoning_turns)",
+          "legendFormat": "avg turns ({{agent_framework}})"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Tool Appropriateness — LLM Judge Score Over Time",
+      "description": "0-1 score from Gemini 2.5-flash. Lower scores indicate the agent is choosing wrong tools or calling them unnecessarily.",
+      "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "avg by (agent_framework) (eval_agent_tool_appropriateness)",
+          "legendFormat": "tool_appropriateness ({{agent_framework}})"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1 } }
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Response Length — Character Count Distribution",
+      "description": "From HeuristicRunner. Sudden increases may indicate verbosity regressions.",
+      "gridPos": { "x": 0, "y": 20, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "avg by (agent_framework) (eval_agent_response_length_chars)",
+          "legendFormat": "avg length ({{agent_framework}})"
+        },
+        {
+          "expr": "max by (agent_framework) (eval_agent_response_length_chars)",
+          "legendFormat": "max length ({{agent_framework}})"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Tool Execution P95 Latency — by Tool",
+      "gridPos": { "x": 12, "y": 20, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{
+        "expr": "histogram_quantile(0.95, sum by (tool_name, le) (rate(agent_tool_call_duration_milliseconds_bucket[2m])))",
+        "legendFormat": "p95 {{tool_name}}"
+      }],
+      "fieldConfig": { "defaults": { "unit": "ms" } }
+    }
+  ]
+}

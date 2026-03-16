@@ -1,0 +1,187 @@
+{
+  "uid": "audit-trail",
+  "title": "06 · Audit Trail",
+  "description": "Compliance and audit view. Full session-level logs with trace_id links to Tempo for end-to-end request reconstruction. Shows model usage, tool invocations, error events, and cross-signals correlation. Target audience: auditors, compliance team.",
+  "tags": ["audit", "compliance", "logs", "tracing"],
+  "timezone": "browser",
+  "refresh": "1m",
+  "time": { "from": "now-7d", "to": "now" },
+  "schemaVersion": 39,
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Total Requests (period)",
+      "gridPos": { "x": 0, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["sum"] } },
+      "targets": [{
+        "expr": "sum(increase(agent_request_duration_milliseconds_count[$__range]))",
+        "legendFormat": "total requests"
+      }]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Unique Sessions (period)",
+      "gridPos": { "x": 4, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [{
+        "expr": "count(count by (agent_session_id) (agent_request_duration_milliseconds_count))",
+        "legendFormat": "sessions"
+      }]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Total Errors (period)",
+      "gridPos": { "x": 8, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["sum"] },
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 5 },
+            { "color": "red", "value": 50 }
+          ]
+        }
+      },
+      "targets": [{
+        "expr": "sum(increase(agent_error_count_total[$__range]))",
+        "legendFormat": "errors"
+      }]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "LangGraph Requests",
+      "gridPos": { "x": 12, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["sum"] } },
+      "targets": [{
+        "expr": "sum(increase(agent_request_duration_milliseconds_count{agent_framework=\"langgraph\"}[$__range]))",
+        "legendFormat": "langgraph"
+      }]
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "ADK Requests",
+      "gridPos": { "x": 16, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["sum"] } },
+      "targets": [{
+        "expr": "sum(increase(agent_request_duration_milliseconds_count{agent_framework=\"adk\"}[$__range]))",
+        "legendFormat": "adk"
+      }]
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Tool Calls (period)",
+      "gridPos": { "x": 20, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["sum"] } },
+      "targets": [{
+        "expr": "sum(increase(agent_tool_call_count_total[$__range]))",
+        "legendFormat": "tool calls"
+      }]
+    },
+    {
+      "id": 7,
+      "type": "logs",
+      "title": "Agent Run Logs — Searchable (with trace_id)",
+      "description": "All agent_run_complete log lines. Click trace_id in a log line to jump to the Tempo trace. Filter by session_id, framework, or model using the LogQL label selectors above.",
+      "gridPos": { "x": 0, "y": 4, "w": 24, "h": 12 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": true,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [{
+        "expr": "{service_name=~\"langgraph-app|adk-app\"} |= \"agent_run_complete\"",
+        "legendFormat": "",
+        "queryType": "range"
+      }]
+    },
+    {
+      "id": 8,
+      "type": "logs",
+      "title": "Error Logs — All Frameworks",
+      "description": "ERROR-level log lines from both agent apps. Each entry includes session_id and trace_id for full reconstruction.",
+      "gridPos": { "x": 0, "y": 16, "w": 24, "h": 10 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showLabels": true,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [{
+        "expr": "{service_name=~\"langgraph-app|adk-app\"} | level=\"ERROR\"",
+        "legendFormat": "",
+        "queryType": "range"
+      }]
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Request Volume — Daily Breakdown by Framework",
+      "description": "Daily request totals for capacity planning and trend analysis.",
+      "gridPos": { "x": 0, "y": 26, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{
+        "expr": "sum by (agent_framework) (increase(agent_request_duration_milliseconds_count[1d]))",
+        "legendFormat": "{{agent_framework}}"
+      }],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Error Events — by Type (for incident timeline)",
+      "gridPos": { "x": 12, "y": 26, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{
+        "expr": "sum by (error_type, agent_framework) (increase(agent_error_count_total[1h]))",
+        "legendFormat": "{{error_type}} ({{agent_framework}})"
+      }],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 11,
+      "type": "logs",
+      "title": "Eval Dispatch Logs",
+      "description": "Log entries from the eval scheduler — shows which jobs completed, which metrics were emitted, and any runner errors.",
+      "gridPos": { "x": 0, "y": 34, "w": 24, "h": 8 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "showLabels": true,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [{
+        "expr": "{service_name=~\"langgraph-app|adk-app\"} |= \"eval_dispatch\"",
+        "legendFormat": "",
+        "queryType": "range"
+      }]
+    }
+  ]
+}

@@ -1,0 +1,182 @@
+{
+  "uid": "llm-performance",
+  "title": "03 · LLM Performance",
+  "description": "Deep-dive into LLM inference metrics: per-call latency, token consumption, reasoning turns, and cross-framework model comparisons. Target audience: ML / AI engineering team.",
+  "tags": ["llm", "tokens", "performance", "engineering"],
+  "timezone": "browser",
+  "refresh": "30s",
+  "time": { "from": "now-6h", "to": "now" },
+  "schemaVersion": 39,
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Total LLM Calls (1 h)",
+      "gridPos": { "x": 0, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["sum"] } },
+      "targets": [{
+        "expr": "sum(increase(agent_llm_call_duration_milliseconds_count[1h]))",
+        "legendFormat": "LLM calls"
+      }]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Total Input Tokens (1 h)",
+      "gridPos": { "x": 4, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["sum"] } },
+      "targets": [{
+        "expr": "sum(increase(agent_llm_tokens_input_tokens_total[1h]))",
+        "legendFormat": "input tokens"
+      }],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Total Output Tokens (1 h)",
+      "gridPos": { "x": 8, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["sum"] } },
+      "targets": [{
+        "expr": "sum(increase(agent_llm_tokens_output_tokens_total[1h]))",
+        "legendFormat": "output tokens"
+      }],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Avg Reasoning Turns / Request",
+      "gridPos": { "x": 12, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [{
+        "expr": "histogram_quantile(0.5, sum by (le) (rate(agent_reasoning_turns_bucket[1h])))",
+        "legendFormat": "median turns"
+      }],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "P95 LLM Call Latency",
+      "gridPos": { "x": 16, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [{
+        "expr": "histogram_quantile(0.95, sum by (le) (rate(agent_llm_call_duration_milliseconds_bucket[5m])))",
+        "legendFormat": "p95 llm latency"
+      }],
+      "fieldConfig": { "defaults": { "unit": "ms" } }
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Input/Output Token Ratio",
+      "gridPos": { "x": 20, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [{
+        "expr": "sum(rate(agent_llm_tokens_output_tokens_total[1h])) / (sum(rate(agent_llm_tokens_input_tokens_total[1h])) + 0.001)",
+        "legendFormat": "out/in ratio"
+      }],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "LLM Call Latency Percentiles — over Time",
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum by (le, agent_framework) (rate(agent_llm_call_duration_milliseconds_bucket[2m])))",
+          "legendFormat": "p50 {{agent_framework}}"
+        },
+        {
+          "expr": "histogram_quantile(0.90, sum by (le, agent_framework) (rate(agent_llm_call_duration_milliseconds_bucket[2m])))",
+          "legendFormat": "p90 {{agent_framework}}"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum by (le, agent_framework) (rate(agent_llm_call_duration_milliseconds_bucket[2m])))",
+          "legendFormat": "p99 {{agent_framework}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ms" } }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Token Consumption Rate — Input vs Output",
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (agent_framework) (rate(agent_llm_tokens_input_tokens_total[2m]))",
+          "legendFormat": "input {{agent_framework}}"
+        },
+        {
+          "expr": "sum by (agent_framework) (rate(agent_llm_tokens_output_tokens_total[2m]))",
+          "legendFormat": "output {{agent_framework}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Reasoning Turns Distribution — Histogram",
+      "description": "Distribution of LLM turns per request. High turn counts suggest complex tasks or inefficient prompting.",
+      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum by (le, agent_framework) (rate(agent_reasoning_turns_bucket[5m])))",
+          "legendFormat": "p50 {{agent_framework}}"
+        },
+        {
+          "expr": "histogram_quantile(0.90, sum by (le, agent_framework) (rate(agent_reasoning_turns_bucket[5m])))",
+          "legendFormat": "p90 {{agent_framework}}"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum by (le, agent_framework) (rate(agent_reasoning_turns_bucket[5m])))",
+          "legendFormat": "p99 {{agent_framework}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "LLM Calls per Agent Run",
+      "description": "Average number of LLM calls made per completed /chat request. Indicates multi-turn depth.",
+      "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{
+        "expr": "sum by (agent_framework) (rate(agent_llm_call_duration_milliseconds_count[5m])) / sum by (agent_framework) (rate(agent_request_duration_milliseconds_count[5m]))",
+        "legendFormat": "llm calls/req ({{agent_framework}})"
+      }],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 11,
+      "type": "heatmap",
+      "title": "LLM Call Latency Heatmap — all frameworks",
+      "description": "Colour = count of LLM calls landing in that latency bucket per minute.",
+      "gridPos": { "x": 0, "y": 20, "w": 24, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{
+        "expr": "sum by (le) (increase(agent_llm_call_duration_milliseconds_bucket[1m]))",
+        "legendFormat": "{{le}}",
+        "format": "heatmap"
+      }],
+      "options": {
+        "calculate": false,
+        "yAxis": { "unit": "ms" }
+      }
+    }
+  ]
+}
