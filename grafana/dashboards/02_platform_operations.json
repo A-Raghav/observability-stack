@@ -146,7 +146,7 @@
         }
       },
       "targets": [{
-        "expr": "sum(increase(agent_error_count_total[1h]))",
+        "expr": "sum(increase(agent_error_count_total[1h])) or on() vector(0)",
         "legendFormat": "errors"
       }]
     },

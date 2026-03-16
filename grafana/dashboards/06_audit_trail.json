@@ -52,7 +52,7 @@
         }
       },
       "targets": [{
-        "expr": "sum(increase(agent_error_count_total[$__range]))",
+        "expr": "sum(increase(agent_error_count_total[$__range])) or on() vector(0)",
         "legendFormat": "errors"
       }]
     },
@@ -157,7 +157,7 @@
       "gridPos": { "x": 12, "y": 26, "w": 12, "h": 8 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [{
-        "expr": "sum by (error_type, agent_framework) (increase(agent_error_count_total[1h]))",
+        "expr": "sum by (error_type, agent_framework) (increase(agent_error_count_total[1h])) or on() vector(0)",
         "legendFormat": "{{error_type}} ({{agent_framework}})"
       }],
       "fieldConfig": { "defaults": { "unit": "short" } }

@@ -28,7 +28,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["sum"] } },
       "targets": [{
-        "expr": "sum(increase(agent_llm_tokens_input_tokens_total[1h]))",
+        "expr": "sum(increase(agent_llm_tokens_input_total[1h]))",
         "legendFormat": "input tokens"
       }],
       "fieldConfig": { "defaults": { "unit": "short" } }
@@ -41,7 +41,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["sum"] } },
       "targets": [{
-        "expr": "sum(increase(agent_llm_tokens_output_tokens_total[1h]))",
+        "expr": "sum(increase(agent_llm_tokens_output_total[1h]))",
         "legendFormat": "output tokens"
       }],
       "fieldConfig": { "defaults": { "unit": "short" } }
@@ -80,7 +80,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
       "targets": [{
-        "expr": "sum(rate(agent_llm_tokens_output_tokens_total[1h])) / (sum(rate(agent_llm_tokens_input_tokens_total[1h])) + 0.001)",
+        "expr": "sum(rate(agent_llm_tokens_output_total[1h])) / (sum(rate(agent_llm_tokens_input_total[1h])) + 0.001)",
         "legendFormat": "out/in ratio"
       }],
       "fieldConfig": { "defaults": { "unit": "short" } }
@@ -115,11 +115,11 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "sum by (agent_framework) (rate(agent_llm_tokens_input_tokens_total[2m]))",
+          "expr": "sum by (agent_framework) (rate(agent_llm_tokens_input_total[2m]))",
           "legendFormat": "input {{agent_framework}}"
         },
         {
-          "expr": "sum by (agent_framework) (rate(agent_llm_tokens_output_tokens_total[2m]))",
+          "expr": "sum by (agent_framework) (rate(agent_llm_tokens_output_total[2m]))",
           "legendFormat": "output {{agent_framework}}"
         }
       ],

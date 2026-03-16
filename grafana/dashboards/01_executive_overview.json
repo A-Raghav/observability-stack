@@ -40,7 +40,7 @@
         }
       },
       "targets": [{
-        "expr": "sum(increase(agent_error_count_total[1h])) / (sum(increase(agent_request_duration_milliseconds_count[1h])) + 0.001)",
+        "expr": "(sum(increase(agent_error_count_total[1h])) or on() vector(0)) / (sum(increase(agent_request_duration_milliseconds_count[1h])) + 0.001)",
         "legendFormat": "Error rate"
       }],
       "fieldConfig": {
@@ -178,7 +178,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "sum by (error_type, agent_framework) (increase(agent_error_count_total[5m]))",
+          "expr": "sum by (error_type, agent_framework) (increase(agent_error_count_total[5m])) or on() vector(0)",
           "legendFormat": "{{error_type}} ({{agent_framework}})"
         }
       ],
